@@ -1,11 +1,25 @@
-import express from 'express'
-import { uploadRoute } from './routes/upload'
 
-const app = express()
-const PORT = process.env.PORT || 8080
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
-app.use(uploadRoute)
+import cluster from 'node:cluster'
+import os from 'node:os'
 
-app.listen(PORT)
-  .on("listening", () => console.log(`Server listening on ${PORT}`))
+
+const runPrimaryProcess = () => {
+  const processesCount = os.cpus().length
+  for (let i = 0; i < processesCount; i++) {
+    cluster.fork()
+  }
+
+  cluster.on('exit', (worker, code, signal) => {
+    if (code !== 0 && !worker.exitedAfterDisconnect) {
+      console.log(`Worker ${worker.process.pid} crashed. Starting a new one...`)
+      cluster.fork()
+    }
+  })
+}
+
+const runWorkerProcess = async () => {
+  await import('./server')
+}
+
+cluster.isPrimary ? runPrimaryProcess() : runWorkerProcess()
+
