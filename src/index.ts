@@ -2,10 +2,9 @@
 import cluster from 'node:cluster'
 import os from 'node:os'
 
-
 const runPrimaryProcess = () => {
   const processesCount = os.cpus().length
-  for (let i = 0; i < processesCount; i++) {
+  for (let i = 0; i < processesCount / processesCount; i++) {
     cluster.fork()
   }
 
