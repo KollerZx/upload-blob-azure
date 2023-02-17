@@ -2,8 +2,7 @@ import Busboy, { FileInfo } from 'busboy'
 import { IncomingHttpHeaders } from 'node:http'
 import { getBlobName } from '../utils'
 import { BlobService } from './blobServiceClient'
-import config from '../config'
-import { PassThrough, Readable } from 'node:stream'
+import { Readable } from 'node:stream'
 
 
 export class BusboyHandler {
@@ -12,16 +11,9 @@ export class BusboyHandler {
   private async onFile(name: string, file: Readable, info: FileInfo) {
     const filename = info.filename
     const blobName = getBlobName(filename)
-    const blobService = new BlobService().client
-    const container = blobService.getContainerClient(config.ContainerName)
-    const blockBlobClient = container.getBlockBlobClient(blobName)
+    const blobService = new BlobService()
 
-    const stream = new PassThrough()
-    file.pipe(stream)
-
-    await container.createIfNotExists()
-
-    await blockBlobClient.uploadStream(stream)
+    await blobService.uploadStream(blobName, file)
   }
 
   init() {

@@ -1,6 +1,7 @@
-import { StorageSharedKeyCredential, BlobServiceClient, generateBlobSASQueryParameters } from "@azure/storage-blob";
+import { StorageSharedKeyCredential, BlobServiceClient, generateBlobSASQueryParameters, BlockBlobUploadStreamOptions } from "@azure/storage-blob";
 import config from "../config";
 import { BlobSASPermissions } from "@azure/storage-blob";
+import { Readable } from "node:stream";
 export class BlobService {
   private AccountName: string
   private AccountKey: string
@@ -33,6 +34,13 @@ export class BlobService {
     return {
       filename
     }
+  }
+
+  async uploadStream(filename: string, stream: Readable, bufferSize?: number, maxConcurrency?: number, options?: BlockBlobUploadStreamOptions) {
+    const container = this.client.getContainerClient(this.Container)
+    const blockBlobClient = container.getBlockBlobClient(filename)
+    await container.createIfNotExists()
+    await blockBlobClient.uploadStream(stream, bufferSize, maxConcurrency, options)
   }
 
   async deleteBlob(filename: string) {
